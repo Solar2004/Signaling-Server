@@ -68,16 +68,41 @@ Deno.serve({ port }, (req) => {
     });
   }
 
+  // DEBUG: Log all incoming WebSocket upgrade requests
+  log("DEBUG", "WebSocket upgrade request received", {
+    url: req.url,
+    upgrade: req.headers.get("upgrade"),
+    connection: req.headers.get("connection"),
+    origin: req.headers.get("origin"),
+    userAgent: req.headers.get("user-agent")?.substring(0, 50)
+  });
+
   // Authentication: Check Sec-WebSocket-Protocol header
   const protocol = req.headers.get("sec-websocket-protocol");
 
+  // DEBUG: Log authentication details
+  log("DEBUG", "Authentication check", {
+    providedProtocol: protocol || "NONE",
+    expectedPassword: SIGNALING_PASSWORD.substring(0, 3) + "***" + SIGNALING_PASSWORD.substring(SIGNALING_PASSWORD.length - 3),
+    passwordLength: SIGNALING_PASSWORD.length,
+    match: protocol === SIGNALING_PASSWORD
+  });
+
   if (protocol !== SIGNALING_PASSWORD) {
-    log("WARN", "Authentication failed", {
-      provided: protocol ? "***" : "none",
-      ip: req.headers.get("x-forwarded-for") || "unknown"
+    log("WARN", "Authentication FAILED", {
+      providedProtocol: protocol || "NONE",
+      providedLength: protocol?.length || 0,
+      expectedPrefix: SIGNALING_PASSWORD.substring(0, 5) + "***",
+      expectedLength: SIGNALING_PASSWORD.length,
+      ip: req.headers.get("x-forwarded-for") || "unknown",
+      origin: req.headers.get("origin")
     });
     return new Response("Unauthorized: Invalid password", { status: 401 });
   }
+
+  log("INFO", "Authentication SUCCESS - Upgrading to WebSocket", {
+    protocol: protocol.substring(0, 3) + "***"
+  });
 
   // Upgrade to WebSocket
   const { socket, response } = Deno.upgradeWebSocket(req, {
