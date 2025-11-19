@@ -5,6 +5,7 @@
 
 const rooms = new Map<string, Set<WebSocket>>();
 const SIGNALING_PASSWORD = Deno.env.get("SIGNALING_PASSWORD") || "change-me-in-production";
+const SERVER_START_TIME = Date.now(); // Persistent uptime tracking
 
 interface ClientInfo {
   room: string | null;
@@ -45,7 +46,7 @@ Deno.serve((req) => {
       totalRooms: rooms.size,
       totalClients: getTotalClients(),
       rooms: getRoomStats(),
-      uptime: performance.now() / 1000,
+      uptime: (Date.now() - SERVER_START_TIME) / 1000, // Uptime in seconds
     };
 
     return new Response(JSON.stringify(stats, null, 2), {

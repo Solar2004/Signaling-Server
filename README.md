@@ -8,6 +8,9 @@ A secure, multi-room WebRTC signaling server built with Deno. Perfect for collab
 - **Multi-room Isolation**: Clients are automatically isolated by room names
 - **TLS Encryption**: All traffic over `wss://` is encrypted in transit
 
+> [!IMPORTANT]
+> **For global connectivity (users in different locations/VPNs):** This signaling server **only coordinates WebRTC connections**. For actual peer-to-peer connectivity across NAT/firewalls, you need **STUN/TURN servers**. See [STUN_TURN_GUIDE.md](./STUN_TURN_GUIDE.md) for detailed setup instructions.
+
 ## 🚀 Quick Start
 
 ### Local Development
@@ -73,9 +76,22 @@ const provider = new WebrtcProvider(
   {
     signaling: ['wss://my-signaling-server.deno.dev'],
     password: 'your-secure-password', // ✅ Password in config, not URL
+    
+    // ⚠️ REQUIRED for global connectivity (users in different locations)
+    peerOpts: {
+      config: {
+        iceServers: [
+          { urls: 'stun:stun.l.google.com:19302' },
+          { urls: 'stun:stun1.l.google.com:19302' },
+        ]
+      }
+    }
   }
 );
 ```
+
+> [!TIP]
+> For users behind strict firewalls or using VPNs, you'll also need TURN servers. See [STUN_TURN_GUIDE.md](./STUN_TURN_GUIDE.md) for complete setup.
 
 ### With vanilla WebSocket
 
@@ -195,6 +211,36 @@ Deno.serve({ port: 3000 }, (req) => {
 - **Free hosting**: Deno Deploy offers generous free tier (100k requests/day)
 - **Zero config**: No database, no state management - just message relay
 - **Automatic cleanup**: Empty rooms are deleted automatically
+
+## 🐛 Troubleshooting
+
+### "Cannot connect from different locations/VPNs"
+
+**This is NOT a signaling server issue!** WebRTC needs STUN/TURN servers for NAT traversal. The signaling server only coordinates connections - it doesn't establish them.
+
+👉 **Solution**: Configure STUN/TURN servers in your WebRTC client. See [STUN_TURN_GUIDE.md](./STUN_TURN_GUIDE.md)
+
+### "Uptime resets"
+
+The uptime counter now uses wall-clock time (`Date.now()`) instead of `performance.now()`, so it persists across Deno Deploy cold starts. However, if Deno Deploy fully restarts your deployment (new instance), the uptime will reset - this is expected behavior.
+
+### TypeScript errors in IDE
+
+If you see "Cannot find name 'Deno'" errors, your IDE needs Deno configuration:
+
+**VS Code**: Install the [Deno extension](https://marketplace.visualstudio.com/items?itemName=denoland.vscode-deno) and enable it in your workspace.
+
+### Connection rejected (401)
+
+Check that your client is passing the correct password via the `Sec-WebSocket-Protocol` header:
+
+```javascript
+// Correct
+new WebSocket('wss://server.deno.dev', 'your-password');
+
+// Wrong - password in URL won't work
+new WebSocket('wss://server.deno.dev?password=wrong');
+```
 
 ## 📄 License
 
