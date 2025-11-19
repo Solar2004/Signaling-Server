@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test de Conectividad WebRTC Global</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 2em;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+
+        .config-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            border: 2px solid #e0e0e0;
+        }
+
+        .config-section h2 {
+            color: #764ba2;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #555;
+        }
+
+        input, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border 0.3s;
+        }
+
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            padding: 14px 28px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-danger {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c0392b;
+        }
+
+        .status {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+        .status.disconnected {
+            background: #fee;
+            color: #c33;
+            border: 2px solid #fcc;
+        }
+
+        .status.connecting {
+            background: #ffeaa7;
+            color: #d63031;
+            border: 2px solid #fdcb6e;
+        }
+
+        .status.connected {
+            background: #d4edda;
+            color: #155724;
+            border: 2px solid #c3e6cb;
+        }
+
+        .log-container {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 20px;
+            border-radius: 8px;
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 0.9em;
+            margin-bottom: 20px;
+        }
+
+        .log-entry {
+            margin-bottom: 8px;
+            padding: 5px;
+            border-left: 3px solid transparent;
+        }
+
+        .log-info {
+            border-left-color: #3498db;
+        }
+
+        .log-success {
+            border-left-color: #2ecc71;
+        }
+
+        .log-warning {
+            border-left-color: #f39c12;
+        }
+
+        .log-error {
+            border-left-color: #e74c3c;
+        }
+
+        .peers-section {
+            margin-top: 20px;
+        }
+
+        .peer-list {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .peer-badge {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .peer-badge::before {
+            content: '👤';
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid;
+        }
+
+        .alert-info {
+            background: #e3f2fd;
+            border-left-color: #2196f3;
+            color: #0d47a1;
+        }
+
+        .alert-warning {
+            background: #fff3e0;
+            border-left-color: #ff9800;
+            color: #e65100;
+        }
+
+        .ice-servers {
+            background: #f0f0f0;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 0.85em;
+            margin-top: 10px;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌍 Test de Conectividad WebRTC Global</h1>
+        <p class="subtitle">Prueba tu servidor de señalización con STUN/TURN configurado automáticamente</p>
+
+        <div class="alert alert-info">
+            <strong>ℹ️ Instrucciones:</strong> Comparte el ROOM ID con tu amigo. Ambos deben usar el mismo servidor, password y room ID.
+        </div>
+
+        <div class="config-section">
+            <h2>⚙️ Configuración</h2>
+            
+            <div class="input-group">
+                <label for="serverUrl">🔗 URL del Servidor de Señalización</label>
+                <input type="text" id="serverUrl" placeholder="wss://your-server.deno.dev" 
+                       value="wss://solar-signaling-server.deno.dev">
+            </div>
+
+            <div class="input-group">
+                <label for="password">🔒 Password</label>
+                <input type="password" id="password" placeholder="tu-password-seguro" value="2004">
+            </div>
+
+            <div class="input-group">
+                <label for="roomId">🚪 Room ID</label>
+                <input type="text" id="roomId" placeholder="my-test-room" 
+                       value="">
+            </div>
+
+            <div class="input-group">
+                <label>🌐 Servidores ICE (STUN/TURN)</label>
+                <div class="ice-servers" id="iceServersDisplay">Cargando configuración...</div>
+            </div>
+
+            <button class="btn btn-primary" id="connectBtn" onclick="connect()">
+                🚀 Conectar
+            </button>
+            <button class="btn btn-danger" id="disconnectBtn" onclick="disconnect()" disabled>
+                ⛔ Desconectar
+            </button>
+        </div>
+
+        <div class="status disconnected" id="status">
+            ⚫ Desconectado
+        </div>
+
+        <div class="peers-section">
+            <h3>👥 Peers Conectados: <span id="peerCount">0</span></h3>
+            <div class="peer-list" id="peerList"></div>
+        </div>
+
+        <h3 style="margin-top: 20px; margin-bottom: 10px;">📋 Log de Actividad</h3>
+        <div class="log-container" id="logContainer"></div>
+    </div>
+
+    <script type="module">
+        import * as Y from 'https://cdn.jsdelivr.net/npm/yjs@13.6.10/+esm';
+        import { WebrtcProvider } from 'https://cdn.jsdelivr.net/npm/y-webrtc@10.3.0/+esm';
+
+        let provider = null;
+        let ydoc = null;
+
+        // Configuración ICE robusta con STUN y TURN gratuitos
+        const iceServers = [
+            // Google STUN (gratis, global)
+            { urls: 'stun:stun.l.google.com:19302' },
+            { urls: 'stun:stun1.l.google.com:19302' },
+            { urls: 'stun:stun2.l.google.com:19302' },
+            { urls: 'stun:stun3.l.google.com:19302' },
+            { urls: 'stun:stun4.l.google.com:19302' },
+            
+            // Metered.ca TURN (gratis, 50GB/mes)
+            // NOTA: Estos son para testing público, regístrate para tus propias credenciales
+            {
+                urls: 'turn:a.relay.metered.ca:80',
+                username: 'e80088571ff421259f93b98c',
+                credential: 'TpHFBALEcpIyjJKs',
+            },
+            {
+                urls: 'turn:a.relay.metered.ca:80?transport=tcp',
+                username: 'e80088571ff421259f93b98c',
+                credential: 'TpHFBALEcpIyjJKs',
+            },
+            {
+                urls: 'turn:a.relay.metered.ca:443',
+                username: 'e80088571ff421259f93b98c',
+                credential: 'TpHFBALEcpIyjJKs',
+            },
+            {
+                urls: 'turns:a.relay.metered.ca:443?transport=tcp',
+                username: 'e80088571ff421259f93b98c',
+                credential: 'TpHFBALEcpIyjJKs',
+            },
+        ];
+
+        // Mostrar configuración ICE
+        document.getElementById('iceServersDisplay').innerHTML = iceServers.map(server => {
+            if (server.username) {
+                return `🔄 TURN: ${server.urls}`;
+            }
+            return `📡 STUN: ${server.urls}`;
+        }).join('<br>');
+
+        // Generar Room ID aleatorio
+        document.getElementById('roomId').value = 'room-' + Math.random().toString(36).substring(2, 8);
+
+        function log(message, type = 'info') {
+            const logContainer = document.getElementById('logContainer');
+            const timestamp = new Date().toLocaleTimeString();
+            const entry = document.createElement('div');
+            entry.className = `log-entry log-${type}`;
+            entry.textContent = `[${timestamp}] ${message}`;
+            logContainer.appendChild(entry);
+            logContainer.scrollTop = logContainer.scrollHeight;
+            console.log(`[${type.toUpperCase()}]`, message);
+        }
+
+        function updateStatus(text, state) {
+            const statusEl = document.getElementById('status');
+            statusEl.textContent = text;
+            statusEl.className = `status ${state}`;
+        }
+
+        function updatePeerList(peers) {
+            const peerList = document.getElementById('peerList');
+            const peerCount = document.getElementById('peerCount');
+            
+            peerCount.textContent = peers.length;
+            
+            if (peers.length === 0) {
+                peerList.innerHTML = '<em style="color: #999;">Esperando peers...</em>';
+            } else {
+                peerList.innerHTML = peers.map((peer, i) => 
+                    `<div class="peer-badge">Peer ${i + 1}</div>`
+                ).join('');
+            }
+        }
+
+        window.connect = function() {
+            const serverUrl = document.getElementById('serverUrl').value;
+            const password = document.getElementById('password').value;
+            const roomId = document.getElementById('roomId').value;
+
+            if (!serverUrl || !password || !roomId) {
+                alert('⚠️ Por favor completa todos los campos');
+                return;
+            }
+
+            log('🔄 Iniciando conexión...', 'info');
+            updateStatus('🔄 Conectando...', 'connecting');
+
+            // Crear documento Yjs
+            ydoc = new Y.Doc();
+
+            // Configurar provider con configuración robusta
+            provider = new WebrtcProvider(
+                roomId,
+                ydoc,
+                {
+                    signaling: [serverUrl],
+                    password: password,
+                    
+                    // Configuración ICE robusta
+                    peerOpts: {
+                        config: {
+                            iceServers: iceServers,
+                            iceCandidatePoolSize: 10,
+                        }
+                    },
+                    
+                    // Configuración adicional
+                    maxConns: 20,
+                    filterBcConns: true,
+                }
+            );
+
+            // Event listeners
+            provider.on('status', event => {
+                log(`📡 Estado de conexión: ${event.status}`, 'info');
+            });
+
+            provider.on('synced', event => {
+                if (event.synced) {
+                    log('✅ ¡Sincronizado con éxito!', 'success');
+                    updateStatus('✅ Conectado y Sincronizado', 'connected');
+                }
+            });
+
+            provider.on('peers', event => {
+                const peers = Array.from(event.added || []);
+                const removed = Array.from(event.removed || []);
+                
+                if (peers.length > 0) {
+                    peers.forEach(peer => {
+                        log(`👤 Peer conectado: ${peer}`, 'success');
+                    });
+                }
+                
+                if (removed.length > 0) {
+                    removed.forEach(peer => {
+                        log(`👋 Peer desconectado: ${peer}`, 'warning');
+                    });
+                }
+
+                // Actualizar lista de peers
+                const allPeers = Array.from(provider.room?.webrtcConns?.keys() || []);
+                updatePeerList(allPeers);
+            });
+
+            // Logging detallado de WebRTC
+            if (provider.room) {
+                log(`🚪 Entrando a la sala: ${roomId}`, 'info');
+                log(`🌐 Servidor de señalización: ${serverUrl}`, 'info');
+                log(`🔒 Password configurado: ✓`, 'success');
+                log(`📡 ${iceServers.length} servidores ICE configurados`, 'success');
+                log(`   - ${iceServers.filter(s => s.urls.includes('stun')).length} STUN servers`, 'info');
+                log(`   - ${iceServers.filter(s => s.urls.includes('turn')).length} TURN servers`, 'info');
+            }
+
+            // Botones
+            document.getElementById('connectBtn').disabled = true;
+            document.getElementById('disconnectBtn').disabled = false;
+        };
+
+        window.disconnect = function() {
+            if (provider) {
+                provider.destroy();
+                provider = null;
+                ydoc = null;
+                log('⛔ Desconectado', 'warning');
+                updateStatus('⚫ Desconectado', 'disconnected');
+                updatePeerList([]);
+            }
+
+            document.getElementById('connectBtn').disabled = false;
+            document.getElementById('disconnectBtn').disabled = true;
+        };
+
+        // Log inicial
+        log('🎉 Cliente de prueba WebRTC listo', 'success');
+        log('📖 Comparte el Room ID con tu amigo para conectar', 'info');
+        log('💡 Este cliente usa STUN + TURN automáticamente', 'info');
+    </script>
+</body>
+</html>

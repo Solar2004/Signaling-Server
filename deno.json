@@ -2,7 +2,8 @@
   "tasks": {
     "start": "deno run --allow-net --allow-env main.ts",
     "dev": "deno run --allow-net --allow-env --watch main.ts",
-    "test": "deno run --allow-net --allow-env test_client.ts"
+    "test": "deno run --allow-net --allow-env test_client.ts",
+    "test-client": "deno run --allow-net --allow-read https://deno.land/std/http/file_server.ts --port 8080 ."
   },
   "compilerOptions": {
     "lib": ["deno.window"]

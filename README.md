@@ -169,7 +169,33 @@ The server logs all important events:
 
 ## 🧪 Testing
 
-Run the test client to verify the server works:
+### Quick Test (Browser-based, STUN+TURN included)
+
+The easiest way to verify global connectivity:
+
+1. **Open the test client**:
+   ```bash
+   # Serve the test client locally
+   deno task test-client
+   ```
+   Or simply open `test_client.html` in your browser.
+
+2. **Configure and connect**:
+   - Enter your signaling server URL
+   - Enter your password
+   - Share the Room ID with a friend
+   - Click "🚀 Conectar"
+
+3. **Verify**:
+   - You should see "✅ Conectado y Sincronizado"
+   - When your friend connects, you'll see "👤 Peer conectado"
+
+> [!TIP]
+> This test client includes free TURN servers from Metered.ca, so it works even behind strict firewalls/VPNs!
+
+### Command-line Test
+
+Run the automated test suite to verify the server works:
 
 ```bash
 deno task test
